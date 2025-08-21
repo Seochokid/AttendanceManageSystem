@@ -11,7 +11,7 @@ using std::string;
 using std::map;
 
 struct AttendanceRecord {
-	string userName;
+	string playerName;
 	string weekday;
 };
 
@@ -32,7 +32,8 @@ enum WeekdayIndex {
 };
 
 const int MAX_INPUT = 500;
-const int MAX_USERS = 100;
+const int MAX_PLAYERS = 100;
+const int TOTAL_WEEKDAYS = 7;
 
 const int GOLD_THRESHOLD = 50;
 const int SILVER_THRESHOLD = 30;
@@ -47,14 +48,14 @@ const int WEDNESDAY_BONUS_POINTS = 10;
 const int WEEKEND_BONUS_POINTS = 10;
 
 AttendanceRecord inputData[MAX_INPUT];
-map<string, int> userIdMap;
-int userCount = 0;
-string userNames[MAX_USERS];
-int attendanceByDay[MAX_USERS][7];
-int userPoints[MAX_USERS];
-int userGrades[MAX_USERS];
-int wednesdayAttendanceCount[MAX_USERS];
-int weekendAttendanceCount[MAX_USERS];
+map<string, int> playerIdMap;
+int playerCount = 0;
+string playerNames[MAX_PLAYERS];
+int attendanceByDay[MAX_PLAYERS][TOTAL_WEEKDAYS];
+int playerPoints[MAX_PLAYERS];
+int playerGrades[MAX_PLAYERS];
+int wednesdayAttendanceCount[MAX_PLAYERS];
+int weekendAttendanceCount[MAX_PLAYERS];
 
 string getGradeName(int grade) {
 	switch (grade) {
@@ -81,77 +82,84 @@ int getWeekdayPoints(const string& weekday) {
 	return DEFAULT_POINTS;
 }
 
-int getUserId(const string& userName) {
-	if (userIdMap.count(userName) == 0) {
-		userIdMap[userName] = ++userCount;
-		userNames[userCount] = userName;
+int getPlayerId(const string& playerName) {
+	if (playerIdMap.count(playerName) == 0) {
+		playerIdMap[playerName] = ++playerCount;
+		playerNames[playerCount] = playerName;
 	}
-	return userIdMap[userName];
+	return playerIdMap[playerName];
 }
 
-void printResults() {
-	for (int i = 1; i <= userCount; i++) {
-		cout << "NAME : " << userNames[i] << ", ";
-		cout << "POINT : " << userPoints[i] << ", ";
-		cout << "GRADE : " << getGradeName(userGrades[i]) << "\n";
-	}
-
+void printRemovedPlayer() {
 	cout << "\n";
 	cout << "Removed player\n";
 	cout << "==============\n";
-	for (int i = 1; i <= userCount; i++) {
-		if (userGrades[i] == NORMAL &&
+	for (int i = 1; i <= playerCount; i++) {
+		if (playerGrades[i] == NORMAL &&
 			wednesdayAttendanceCount[i] == 0 &&
 			weekendAttendanceCount[i] == 0) {
-			cout << userNames[i] << "\n";
+			cout << playerNames[i] << "\n";
 		}
 	}
 }
 
+void printNameAndPoint() {
+	for (int i = 1; i <= playerCount; i++) {
+		cout << "NAME : " << playerNames[i] << ", ";
+		cout << "POINT : " << playerPoints[i] << ", ";
+		cout << "GRADE : " << getGradeName(playerGrades[i]) << "\n";
+	}
+}
+
+void printResults() {
+	printNameAndPoint();
+	printRemovedPlayer();
+}
+
 void assignGrades() {
-	for (int i = 1; i <= userCount; i++) {
-		if (userPoints[i] >= GOLD_THRESHOLD) {
-			userGrades[i] = GOLD;
+	for (int i = 1; i <= playerCount; i++) {
+		if (playerPoints[i] >= GOLD_THRESHOLD) {
+			playerGrades[i] = GOLD;
 		}
-		else if (userPoints[i] >= SILVER_THRESHOLD) {
-			userGrades[i] = SILVER;
+		else if (playerPoints[i] >= SILVER_THRESHOLD) {
+			playerGrades[i] = SILVER;
 		}
 		else {
-			userGrades[i] = NORMAL;
+			playerGrades[i] = NORMAL;
 		}
 	}
 }
 
 void calculateBonusPoints() {
-	for (int i = 1; i <= userCount; i++) {
+	for (int i = 1; i <= playerCount; i++) {
 		if (attendanceByDay[i][WEDNESDAY] >= WEDNESDAY_BONUS_THRESHOLD) {
-			userPoints[i] += WEDNESDAY_BONUS_POINTS;
+			playerPoints[i] += WEDNESDAY_BONUS_POINTS;
 		}
 
 		int weekendAttendance = attendanceByDay[i][SATURDAY] + attendanceByDay[i][SUNDAY];
 		if (weekendAttendance >= WEEKEND_BONUS_THRESHOLD) {
-			userPoints[i] += WEEKEND_BONUS_POINTS;
+			playerPoints[i] += WEEKEND_BONUS_POINTS;
 		}
 	}
 }
 
 void calculateDefaultPoints() {
-	string userName, weekday;
-	int userId, weekdayIndex, points;
+	string playerName, weekday;
+	int playerId, weekdayIndex, points;
 	for (int i = 0; i < MAX_INPUT; i++) {
-		userName = inputData[i].userName;
+		playerName = inputData[i].playerName;
 		weekday = inputData[i].weekday;
-		userId = getUserId(userName);
+		playerId = getPlayerId(playerName);
 		weekdayIndex = getWeekdayIndex(weekday);
 		points = getWeekdayPoints(weekday);
 		if (weekdayIndex == WEDNESDAY) {
-			wednesdayAttendanceCount[userId]++;
+			wednesdayAttendanceCount[playerId]++;
 		}
 		else if (weekdayIndex == SATURDAY || weekdayIndex == SUNDAY) {
-			weekendAttendanceCount[userId]++;
+			weekendAttendanceCount[playerId]++;
 		}
-		attendanceByDay[userId][weekdayIndex]++;
-		userPoints[userId] += points;
+		attendanceByDay[playerId][weekdayIndex]++;
+		playerPoints[playerId] += points;
 	}
 }
 
@@ -163,8 +171,8 @@ void calculateTotalPoints() {
 void readAttendanceData() {
 	ifstream fin("attendance_weekday_500.txt");
 	for (int i = 0; i < MAX_INPUT; i++) {
-		string userName, weekday;
-		fin >> inputData[i].userName >> inputData[i].weekday;
+		string playerName, weekday;
+		fin >> inputData[i].playerName >> inputData[i].weekday;
 	}
 }
 
